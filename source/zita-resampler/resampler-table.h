@@ -22,7 +22,9 @@
 #define __RESAMPLER_TABLE_H
 
 
+#if !defined(PICOLV2)
 #include <pthread.h>
+#endif
 
 
 #define ZITA_RESAMPLER_MAJOR_VERSION 1
@@ -39,12 +41,21 @@ private:
 
     friend class Resampler_table;
 
+#if defined(PICOLV2)
+    // PicoLV2 invokes each plugin instance from a single core, so the global
+    // resampler-table list cannot be accessed concurrently.
+    Resampler_mutex (void) {}
+    ~Resampler_mutex (void) {}
+    void lock (void) {}
+    void unlock (void) {}
+#else
     Resampler_mutex (void) { pthread_mutex_init (&_mutex, 0); }
     ~Resampler_mutex (void) { pthread_mutex_destroy (&_mutex); }
     void lock (void) { pthread_mutex_lock (&_mutex); }
     void unlock (void) { pthread_mutex_unlock (&_mutex); }
 
     pthread_mutex_t  _mutex;
+#endif
 };
 
 
